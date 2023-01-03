@@ -1,20 +1,19 @@
 import { prisma } from "../../../../database/prismaClient";
 import { hash } from "bcrypt";
-interface ICreateClient {
-  username: string;
-  password: string;
-}
+import { IClient } from "../../../../interfaces/client";
+import { ValidationUserUseCase } from "../../../account/validations/ValidationUserUseCase";
+import { Response } from "express";
 
 export class CreateClientUseCase {
-  async execute({ password, username }: ICreateClient) {
-    const clientExists = await prisma.clients.findFirst({
-      where: {
-        username
-      },
-    });
+  async execute({ password, username }: IClient, response?: Response) {
+    const validationUserUseCase = new ValidationUserUseCase();
 
-    if (clientExists) {
-      throw new Error("Client already exists");
+    var validdationName = await validationUserUseCase
+      .execute(username)
+      .then((res) => res);
+
+    if (validdationName) {
+      throw new Error(`Error client ${username} exists`);
     }
 
     const hashPassword = await hash(password, 10);
@@ -25,6 +24,7 @@ export class CreateClientUseCase {
         password: hashPassword,
       },
     });
-    return client;
+
+    return { status: 200, client: client?.username };
   }
 }

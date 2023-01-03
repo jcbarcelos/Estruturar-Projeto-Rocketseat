@@ -3,16 +3,41 @@ version: '3.1'
 
 services:
 
+  estrutura:
+    build: .
+    restart: on-failure
+    command: npx prisma migrate dev --create-only
+    ports:
+      - 8085:3000
+    depends_on:
+      - db
+    networks:
+      - network-estrutura
+    volumes:
+      - ".:/app"
+      - "nodemodule:/app/node_modules"
   db:
     image: postgres
-    restart: always
+    restart: on-failure
     environment:
       POSTGRES_PASSWORD: example
     ports:
-      - 5432:5432
+      - 5439:5432
+    networks:
+      - network-estrutura
 
   adminer:
     image: adminer
-    restart: always
+    restart: on-failure
     ports:
       - 8080:8080
+    networks:
+      - network-estrutura
+
+
+volumes:
+  nodemodule: {}
+
+networks:
+  network-estrutura:
+    driver: bridge
